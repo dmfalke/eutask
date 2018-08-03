@@ -1,0 +1,272 @@
+#!/usr/bin/env bash
+
+# EuPathDB specific task runner
+# =============================
+
+# Usage:
+# ------
+#
+#   eutask [task,] [-t | --target target] [-c | --config configFile]
+#
+
+# initialize tasks array
+tasks=()
+
+# parse options
+while [[ $1 ]]
+do
+  case "$1" in
+
+    -t | --target)
+      target="$2"
+      shift 2
+      ;;
+
+    -c | --config)
+      config="$2"
+      shift 2
+      ;;
+
+    --)
+      tasks+=("$1")
+      shift
+      break;;
+
+    *)
+      tasks+=("$1")
+      shift
+      ;;
+
+  esac
+done
+
+
+# config file environment variable
+if [ -z "$config" ]; then
+  config=$EUTASK_CONFIG_FILE
+fi
+
+# Setup
+# -----
+
+# Find config
+if [ -z "$config" ]; then
+  config=.eutaskrc
+  while [[ $PWD != '/' ]]
+  do
+    if [ -f $config ]
+    then
+      break
+    fi
+    cd ..
+  done
+else
+  cd $(dirname $config)
+  config=$(basename $config)
+fi
+
+if [ ! -f $config ]
+then
+  echo Could not find $config in current or parent directory.
+  exit
+else
+  echo Found $config in $PWD
+fi
+
+# Populate variables $server, $base_project, $webapp, $instance
+source $config
+
+if [[ "$server" = "" ]]
+then
+  echo server must be set in $config
+  exit
+fi
+
+if [[ "$base_project" = "" ]]
+then
+  echo base_project must be set in $config
+  exit
+fi
+
+if [[ "$webapp" = "" ]]
+then
+  echo webapp must be set in $config
+  exit
+fi
+
+if [[ "$instance" = "" ]]
+then
+  echo instance must be set in $config
+  exit
+fi
+
+if [[ "$PROJECT_HOME" = "" ]]
+then
+  echo PROJECT_HOME must be set
+  exit
+fi
+
+BASE_DIR=/var/www/$instance/$webapp
+
+
+# Optional settings
+# -----------------
+
+if [[ "$REMOTE_PROJECT_HOME" = "" ]]
+then
+  REMOTE_PROJECT_HOME=$BASE_DIR/project_home
+fi
+
+if [[ "$config_file" = "" ]]
+then
+  config_file="$BASE_DIR/config.yaml"
+fi
+
+
+echo
+echo url=$url
+echo server=$server
+echo base_project=$base_project
+echo webapp=$webapp
+echo instance=$instance
+echo PROJECT_HOME=$PROJECT_HOME
+echo REMOTE_PROJECT_HOME=$REMOTE_PROJECT_HOME
+echo config_file=$config_file
+echo tasks=${tasks[@]}
+echo target=$target
+echo
+
+# Helpers
+# -------
+
+__remote_cmd () {
+  ssh $server "source $BASE_DIR/etc/setenv && $@"
+}
+
+# Tasks
+# -----
+
+# sync - Push working copies to dev server
+_task_sync () {
+  local c=$target
+
+  if [[ "$target" = "" ]]
+  then
+    c=.
+  fi
+
+  rsync \
+    -zvrc \
+    --delete \
+    --exclude-from=<(cd $PROJECT_HOME/$c/ && svn st * --no-ignore | grep '^I ' | sed 's/^........//') \
+    --exclude-from=.rsync.ignore \
+    $PROJECT_HOME/$c/ \
+    $server:$REMOTE_PROJECT_HOME/$c
+}
+
+# bld - Call bld on target
+_task_bld () {
+  local c=$target
+
+  if [[ "$target" = "" ]]
+  then
+    c=$base_project
+  fi
+  __remote_cmd bld $c
+}
+
+# bldw - Call bldw on target
+_task_bldw () {
+  local c=$target
+
+  if [[ "$target" = "" ]]
+  then
+    c=$base_project
+  fi
+  __remote_cmd bldw $c $BASE_DIR/etc/webapp.prop
+}
+
+_task_wb () {
+  __remote_cmd wb $1
+}
+
+# generate configuration files
+_task_configure () {
+  __remote_cmd eupathSiteConfigure -model \$WDK_MODEL -file $config_file
+}
+
+# reload the tomcat application
+_task_reload () {
+  __remote_cmd instance_manager manage $instance reload $webapp
+}
+
+# call rebuilder
+_task_rebuild () {
+  ssh $server "whoami"
+  __remote_cmd rebuilder $url --buildroot $base_project --color --skip-svn-update --ignore-ip
+}
+
+# call rebuilder and recreate $REMOTE_PROJECT_HOME
+_task_clean () {
+  __remote_cmd rebuilder $url --buildroot $base_project --color --do-aggressive-clean --ignore-ip
+}
+
+# open a shell on the remote server
+_task_shell () {
+  ssh -Y $server
+}
+
+_task_sh () {
+  _task_shell
+}
+
+# alias shell task
+_task_ssh () {
+  _task_shell
+}
+
+# run a single remote command
+_task_run () {
+  __remote_cmd "$@"
+}
+
+# open a project screen session for the website
+_task_screen () {
+  ssh -Y $server -t "sc $url"
+}
+
+_task_sc () { _task_screen; }
+
+# tail logs
+_task_log () {
+  ssh $server "cattail -ct $url"
+}
+
+# checkout all svn repos locally configured for the website
+# this uses dashboard to get the correct repo urls, so the site must already be built and loaded
+_task_checkout () {
+  cd $PROJECT_HOME
+  ssh -M -S .checkout-socket -fN -D localhost:9000 $server
+  curl --socks5-hostname localhost:9000 -s $url/dashboard/xml/svn/checkout/value | /bin/sh
+  ssh -S .checkout-socket -O exit $server
+
+}
+
+# switch all local svn repos to match the website
+# this uses dashboard to get the correct repo urls, so the site must already be built and loaded
+_task_syncrepos () {
+  cd $PROJECT_HOME
+  ssh -M -S .checkout-socket -fN -D localhost:9000 $server
+  curl --socks5-hostname localhost:9000 -s $url/dashboard/xml/svn/switch/value | /bin/sh
+  ssh -S .checkout-socket -O exit $server
+}
+
+## run the tasks
+for task in "${tasks[@]}"
+do
+  IFS=':' read -ra parts <<< "$task"
+  task_name="${parts[0]}"
+  task_args="${parts[@]:1}"
+  set -e
+  _task_$task_name $task_args
+done
