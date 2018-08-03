@@ -18,7 +18,7 @@ eutask sync rebuild
 eutask sync bldw -t WDK/View
 ```
 
-### Tail log files for a remote website (using cattail ${url} -ct)
+### Tail log files for a remote website (using `cattail ${url} -ct`)
 ```
 eutask log
 ```
