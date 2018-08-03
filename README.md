@@ -6,6 +6,10 @@ website instance, and rebuild.
 `eutask` is configuration based, which makes it easy to work with multiple
 remote website instances.
 
+## installation
+
+Clone this repository and put its `bin` directory in your `$PATH`.
+
 ## examples
 
 ### Push all local changes to a remote website instance and rebuild
