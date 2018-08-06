@@ -1,6 +1,6 @@
 # eutask
-EuPathDB website development utility. Edit files locally, push to a remote
-website instance, and rebuild.
+A EuPathDB website development utility that facilitates editing files locally,
+pushing changes to a remote website, and rebuilding that remote website.
 
 `eutask` is configuration based, which makes it easy to work with multiple
 remote website instances.
@@ -31,6 +31,26 @@ Options:
                     or nearest ancestor directory.                      [string]
   -t, --target      GUS project (e.g., WDK) or component (e.g., WDK/View) to
                     apply tasks.                                        [string]
+```
+
+## configuration
+A `.eutaskrc` file defines the following properties:
+* `url` The root url to the remote website (e.g., dfalke.plasmodb.org).
+* `server` The server the remote website resides (e.g., ash.pcbi.upenn.edu).
+* `base_project` The root SVN project for the website (e.g., ApiCommonPresenters).
+* `webapp` The name of the webapp (e.g., dfalke.plasmo).
+* `instance` The name of the tomcat instance (as known by `instance_manager`) (e.g., PlasmoDB).
+* `PROJECT_HOME` The absolute path of the local directory containing SVN projects.
+* `REMOTE_PROJECT_HOME` The absolute path of the remote directory containing SVN projects. (Optional, defaults to `$BASE_GUS/project_home`).
+
+**Example**
+```
+url=dfalke.plasmodb.org
+server=luffa
+base_project=ApiCommonPresenters
+webapp=plasmo.dfalke
+instance=PlasmoDB
+PROJECT_HOME=$HOME/Projects/eupathdb/project_home
 ```
 
 ## examples
