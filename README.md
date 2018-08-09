@@ -9,7 +9,7 @@ remote website instances.
 Clone this repository and put its `bin` directory in your `$PATH`.
 
 ```
-Usage: eutask.js [task..] [options]
+Usage: eutask [task..] [options]
 
 Tasks:
   sync              Push file to remote website instance.
