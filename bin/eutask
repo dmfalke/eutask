@@ -195,7 +195,7 @@ _task_wb () {
 
 # generate configuration files
 _task_configure () {
-  __remote_cmd eupathSiteConfigure -model \$WDK_MODEL -file $config_file
+  __remote_cmd ANSIBLE_FORCE_COLOR=true conifer configure $url
 }
 
 # reload the tomcat application
