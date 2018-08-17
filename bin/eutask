@@ -9,6 +9,9 @@
 #   eutask [task,] [-t | --target target] [-c | --config configFile]
 #
 
+# script directory
+script_dir=$(dirname $0)
+
 # initialize tasks array
 tasks=()
 
@@ -159,7 +162,7 @@ _task_sync () {
     -zvrc \
     --delete \
     --exclude-from=<(cd $PROJECT_HOME/$c/ && svn st * --no-ignore | grep '^I ' | sed 's/^........//') \
-    --exclude-from=.rsync.ignore \
+    --exclude-from=$script_dir/../.rsync.ignore \
     $PROJECT_HOME/$c/ \
     $server:$REMOTE_PROJECT_HOME/$c
 }
@@ -198,6 +201,10 @@ _task_configure () {
 # reload the tomcat application
 _task_reload () {
   __remote_cmd instance_manager manage $instance reload $webapp
+}
+
+_task_restart_tomcat () {
+  __remote_cmd "sudo instance_manager stop $instance force && sudo instance_manager start $instance"
 }
 
 # call rebuilder

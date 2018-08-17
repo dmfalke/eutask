@@ -23,6 +23,7 @@ Tasks:
   rebuild           Rebuild site using `rebuilder`.
   clean             Rebuild site using `rebuilder --do-aggressive-clean`. This
                     will wipe changes in the remote project_home.
+  restart_tomcat    Restart the tomcat instance specified in eutaskrc.
   shell             Create a new shell session on remote server
   log               Tail catalina and tomcat logs on remote server
 
