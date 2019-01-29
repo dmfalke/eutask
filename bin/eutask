@@ -175,7 +175,7 @@ _task_bld () {
   then
     c=$base_project
   fi
-  __remote_cmd bld $c
+  __remote_cmd bld $c -publishDocs
 }
 
 # bldw - Call bldw on target
@@ -210,12 +210,12 @@ _task_restart_tomcat () {
 # call rebuilder
 _task_rebuild () {
   ssh $server "whoami"
-  __remote_cmd rebuilder $url --buildroot $base_project --color --skip-svn-update --ignore-ip
+  __remote_cmd rebuilder $url --buildroot $base_project --color --skip-svn-update --ignore-ip --non-interactive --publish-docs
 }
 
 # call rebuilder and recreate $REMOTE_PROJECT_HOME
 _task_clean () {
-  __remote_cmd rebuilder $url --buildroot $base_project --color --do-aggressive-clean --ignore-ip
+  __remote_cmd rebuilder $url --buildroot $base_project --color --do-aggressive-clean --ignore-ip --non-interactive --publish-docs
 }
 
 # open a shell on the remote server

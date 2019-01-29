@@ -18,9 +18,6 @@ capfile
 
 RemoteSystemsTempFiles
 
-ApiCommonWebService
-WSF-Client.jar
-WSF/Client
 CAlign.o
 
 *classes
