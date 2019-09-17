@@ -161,7 +161,7 @@ _task_sync () {
   rsync \
     -zvrc \
     --delete \
-    --exclude-from=<(cd $PROJECT_HOME/$c/ && svn st * --no-ignore | grep '^I ' | sed 's/^........//') \
+    --filter=':- .gitignore' \
     --exclude-from=$script_dir/../.rsync.ignore \
     $PROJECT_HOME/$c/ \
     $server:$REMOTE_PROJECT_HOME/$c
