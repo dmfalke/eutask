@@ -27,3 +27,5 @@ CAlign.o
 *typings
 *.idea
 *.settings
+
+JBrowse/plugins
