@@ -22,10 +22,12 @@ CAlign.o
 
 *classes
 *target
-*dist
+# *dist
 *node_modules
 *typings
 *.idea
 *.settings
 
-JBrowse/plugins
+# JBrowse/plugins
+jbrowse/auto_generated
+web-monorepo

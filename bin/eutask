@@ -10,7 +10,7 @@
 #
 
 # script directory
-script_dir=$(dirname $0)
+script_dir=$(dirname $(readlink $0))
 
 # initialize tasks array
 tasks=()
@@ -120,13 +120,9 @@ then
   REMOTE_PROJECT_HOME=$BASE_DIR/project_home
 fi
 
-if [[ "$config_file" = "" ]]
-then
-  config_file="$BASE_DIR/config.yaml"
-fi
-
 
 echo
+echo ================================================================================
 echo url=$url
 echo server=$server
 echo base_project=$base_project
@@ -134,16 +130,16 @@ echo webapp=$webapp
 echo instance=$instance
 echo PROJECT_HOME=$PROJECT_HOME
 echo REMOTE_PROJECT_HOME=$REMOTE_PROJECT_HOME
-echo config_file=$config_file
 echo tasks=${tasks[@]}
 echo target=$target
+echo ================================================================================
 echo
 
 # Helpers
 # -------
 
 __remote_cmd () {
-  ssh $server "source $BASE_DIR/etc/setenv && $@"
+  ssh $server "source $BASE_DIR/etc/setenv && pwd && $@"
 }
 
 # Tasks
@@ -162,7 +158,9 @@ _task_sync () {
     -zvrc \
     --delete \
     --filter=':- .gitignore' \
+    --include-from=$script_dir/../.rsync.include \
     --exclude-from=$script_dir/../.rsync.ignore \
+    --no-links \
     $PROJECT_HOME/$c/ \
     $server:$REMOTE_PROJECT_HOME/$c
 }
@@ -234,7 +232,7 @@ _task_ssh () {
 
 # run a single remote command
 _task_run () {
-  __remote_cmd "$@"
+  __remote_cmd "cd \$PROJECT_HOME && $@"
 }
 
 # open a project screen session for the website
@@ -277,3 +275,8 @@ do
   set -e
   _task_$task_name $task_args
 done
+echo
+echo ================================================================================
+echo https://$url
+echo ================================================================================
+echo
